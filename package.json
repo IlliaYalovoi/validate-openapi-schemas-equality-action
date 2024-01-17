@@ -1,0 +1,14 @@
+{
+  "name": "validate-openapi-schemas-equality-action",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/run/index.js",
+  "scripts": {
+    "build": "ncc build -o dist/run/ src/main.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IlliaYalovoi/validate-openapi-schemas-equality-action.git"
+  },
+  "private": true
+}
