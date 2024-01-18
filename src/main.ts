@@ -1,1 +1,3 @@
-console.log("")
+import {run} from "./run";
+
+run()

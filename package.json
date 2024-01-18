@@ -10,5 +10,10 @@
     "type": "git",
     "url": "https://github.com/IlliaYalovoi/validate-openapi-schemas-equality-action.git"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@apidevtools/swagger-parser": "^10.1.0",
+    "class-transformer": "^0.5.1",
+    "reflect-metadata": "^0.2.1"
+  }
 }
