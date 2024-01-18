@@ -16629,9 +16629,10 @@ Object.defineProperty(exports, '__esModule', { value: true });
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isDuplicatingSchemasEquals = void 0;
-function isDuplicatingSchemasEquals(apis) {
-    let schemaMap = new Map();
+exports.validateSchemas = void 0;
+function validateSchemas(apis) {
+    const schemaErrors = [];
+    const schemaMap = new Map();
     for (const api of apis) {
         if (api.components?.schemas == null) {
             continue;
@@ -16639,18 +16640,22 @@ function isDuplicatingSchemasEquals(apis) {
         const schemaKeys = Object.keys(api.components.schemas);
         for (const schemaKey of schemaKeys) {
             const schema = api.components.schemas[schemaKey];
-            console.log(schemaKey, schemaMap.has(schemaKey));
             if (schemaMap.has(schemaKey)) {
                 if (!isObjectsEqual(schema, schemaMap.get(schemaKey))) {
-                    return false;
+                    schemaErrors.push({
+                        schemaKey,
+                        error: `Schema '${schemaKey}' in '${api.info.title}' does not pass validation.`,
+                    });
                 }
             }
-            schemaMap.set(schemaKey, schema);
+            else {
+                schemaMap.set(schemaKey, schema);
+            }
         }
     }
-    return true;
+    return schemaErrors.length > 0 ? schemaErrors : null;
 }
-exports.isDuplicatingSchemasEquals = isDuplicatingSchemasEquals;
+exports.validateSchemas = validateSchemas;
 function isObjectsEqual(obj1, obj2) {
     const keys1 = Object.keys(obj1);
     const keys2 = Object.keys(obj2);
@@ -16688,7 +16693,61 @@ function deepEqual(value1, value2) {
 
 /***/ }),
 
-/***/ 767:
+/***/ 29:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getAllFilesInFolder = void 0;
+const fs = __importStar(__nccwpck_require__(7147));
+const path = __importStar(__nccwpck_require__(1017));
+function getAllFilesInFolder(folderPath) {
+    const files = [];
+    function traverseDirectory(currentPath) {
+        const items = fs.readdirSync(currentPath);
+        items.forEach(item => {
+            const itemPath = path.join(currentPath, item);
+            if (fs.statSync(itemPath).isDirectory()) {
+                traverseDirectory(itemPath);
+            }
+            else {
+                files.push(itemPath);
+            }
+        });
+    }
+    traverseDirectory(folderPath);
+    return files;
+}
+exports.getAllFilesInFolder = getAllFilesInFolder;
+
+
+/***/ }),
+
+/***/ 8693:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -16697,9 +16756,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parse = void 0;
+exports.parseOpenAPIV3SpecFiles = void 0;
 const swagger_parser_1 = __importDefault(__nccwpck_require__(4097));
-async function parse(files) {
+async function parseOpenAPIV3SpecFiles(files) {
     let apis = [];
     for (const file of files) {
         let apiRaw = await swagger_parser_1.default.parse(file);
@@ -16709,7 +16768,7 @@ async function parse(files) {
     }
     return apis;
 }
-exports.parse = parse;
+exports.parseOpenAPIV3SpecFiles = parseOpenAPIV3SpecFiles;
 
 
 /***/ }),
@@ -16721,23 +16780,38 @@ exports.parse = parse;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
-const parse_1 = __nccwpck_require__(767);
+const parser_1 = __nccwpck_require__(8693);
 const checker_1 = __nccwpck_require__(4869);
-const files = [
-    "./api/auditlog.yaml",
-    "./api/codewars.yaml",
-    "./api/grading.yaml",
-    "./api/inventory.yaml",
-    "./api/notification.yaml",
-    "./api/rbac.yaml",
-    "./api/search.yaml",
-    "./api/syllabus.yaml",
-    "./api/user-management.yaml"
-];
+const fs_1 = __nccwpck_require__(29);
+// const files : string[] = [
+//     "./api/auditlog.yaml",
+//     "./api/codewars.yaml",
+//     "./api/grading.yaml",
+//     "./api/inventory.yaml",
+//     "./api/notification.yaml",
+//     "./api/rbac.yaml",
+//     "./api/search.yaml",
+//     "./api/syllabus.yaml",
+//     "./api/user-management.yaml"
+// ]
+const path = './api';
 async function run() {
-    const apis = await (0, parse_1.parse)(files);
-    // console.log(apis)
-    console.log((0, checker_1.isDuplicatingSchemasEquals)(apis));
+    try {
+        const files = (0, fs_1.getAllFilesInFolder)(path);
+        const apis = await (0, parser_1.parseOpenAPIV3SpecFiles)(files);
+        const validationErrors = (0, checker_1.validateSchemas)(apis);
+        if (validationErrors !== null) {
+            validationErrors.forEach((error) => {
+                console.error(`Validation error for schema '${error.schemaKey}': ${error.error}`);
+            });
+        }
+        else {
+            console.log('All schemas passed validation.');
+        }
+    }
+    catch (error) {
+        console.error('An error occurred:', error);
+    }
 }
 exports.run = run;
 
@@ -16765,6 +16839,14 @@ module.exports = require("http");
 
 "use strict";
 module.exports = require("https");
+
+/***/ }),
+
+/***/ 1017:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("path");
 
 /***/ }),
 

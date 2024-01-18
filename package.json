@@ -15,5 +15,8 @@
     "@apidevtools/swagger-parser": "^10.1.0",
     "class-transformer": "^0.5.1",
     "reflect-metadata": "^0.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5"
   }
 }

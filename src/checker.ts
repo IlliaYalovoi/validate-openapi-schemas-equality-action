@@ -1,31 +1,38 @@
 import {OpenAPIV3} from "openapi-types";
 
-export function isDuplicatingSchemasEquals(apis: OpenAPIV3.Document[]): boolean {
-    let schemaMap = new Map<string, any>()
+interface validationError {
+    schemaKey: string;
+    error: string;
+}
+
+export function validateSchemas(apis: OpenAPIV3.Document[]): validationError[] | null {
+    const schemaErrors: validationError[] = [];
+    const schemaMap = new Map<string, any>()
 
     for (const api of apis) {
         if (api.components?.schemas == null) {
             continue
         }
 
-
-
         const schemaKeys = Object.keys(api.components.schemas);
 
         for(const schemaKey of schemaKeys) {
             const schema = api.components.schemas[schemaKey];
-            console.log(schemaKey, schemaMap.has(schemaKey))
+
             if (schemaMap.has(schemaKey)) {
                 if (!isObjectsEqual(schema, schemaMap.get(schemaKey))) {
-                    return false
+                    schemaErrors.push({
+                        schemaKey,
+                        error: `Schema '${schemaKey}' in '${api.info.title}' does not pass validation.`,
+                    })
                 }
+            } else {
+                schemaMap.set(schemaKey, schema)
             }
-
-            schemaMap.set(schemaKey, schema)
         }
     }
 
-    return true
+    return schemaErrors.length > 0 ? schemaErrors : null
 }
 
 function isObjectsEqual(obj1: Record<string, any>, obj2: Record<string, any>): boolean {
