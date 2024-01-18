@@ -1,0 +1,10 @@
+name: 'Validate OpenAPI3 schemas equality'
+description: 'Validate OpenAPI3 schemas equality across files in given path'
+inputs:
+  path:
+    description: 'Path of folder with OpenAPI3 specification yaml files. Path can be as absolute as relative.'
+    required: true
+    default: './api'
+runs:
+  using: 'node20'
+  main: './dist/run/index.js'
