@@ -41342,15 +41342,16 @@ function validateSchemas(apis) {
         for (const schemaKey of schemaKeys) {
             const schema = api.components.schemas[schemaKey];
             if (schemaMap.has(schemaKey)) {
-                if (!isObjectsEqual(schema, schemaMap.get(schemaKey))) {
+                const existingRecord = schemaMap.get(schemaKey);
+                if (existingRecord && !isObjectsEqual(schema, existingRecord.schema)) {
                     schemaErrors.push({
                         schemaKey,
-                        error: `Schema '${schemaKey}' in '${api.info.title}' does not pass validation.`,
+                        error: `Mismatch between schema ${schemaKey} in API specs ${existingRecord.apiTitle} and ${api.info.title}`,
                     });
                 }
             }
             else {
-                schemaMap.set(schemaKey, schema);
+                schemaMap.set(schemaKey, { apiTitle: api.info.title, schema });
             }
         }
     }

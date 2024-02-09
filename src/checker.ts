@@ -1,13 +1,18 @@
 import {OpenAPIV3} from "openapi-types";
 
-interface validationError {
+interface ValidationError {
     schemaKey: string;
     error: string;
 }
 
-export function validateSchemas(apis: OpenAPIV3.Document[]): validationError[] | null {
-    const schemaErrors: validationError[] = [];
-    const schemaMap = new Map<string, any>()
+interface SchemaRecord {
+    apiTitle: string;
+    schema: any;
+}
+
+export function validateSchemas(apis: OpenAPIV3.Document[]): ValidationError[] | null {
+    const schemaErrors: ValidationError[] = [];
+    const schemaMap = new Map<string, SchemaRecord>()
 
     for (const api of apis) {
         if (api.components?.schemas == null) {
@@ -20,14 +25,15 @@ export function validateSchemas(apis: OpenAPIV3.Document[]): validationError[] |
             const schema = api.components.schemas[schemaKey];
 
             if (schemaMap.has(schemaKey)) {
-                if (!isObjectsEqual(schema, schemaMap.get(schemaKey))) {
+                const existingRecord = schemaMap.get(schemaKey);
+                if (existingRecord && !isObjectsEqual(schema, existingRecord.schema)) {
                     schemaErrors.push({
                         schemaKey,
-                        error: `Schema '${schemaKey}' in '${api.info.title}' does not pass validation.`,
+                        error: `Mismatch between schema ${schemaKey} in API specs ${existingRecord.apiTitle} and ${api.info.title}`,
                     })
                 }
             } else {
-                schemaMap.set(schemaKey, schema)
+                schemaMap.set(schemaKey, { apiTitle: api.info.title, schema });
             }
         }
     }
